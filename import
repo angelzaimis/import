@@ -1,0 +1,131 @@
+import pyxel
+import random
+
+# Colors
+WARM_COLORS = [1, 2, 3, 4, 5]  # Red, Red Orange, Orange, Yellow Orange, Yellow
+COOL_COLORS = [6, 7, 8, 9, 10, 11]  # Violet, Blue Violet, Blue, Blue Green, Green, Yellow Green
+PRIMARY_COLORS = [1, 8, 5]  # Red, Blue, Yellow
+SECONDARY_COLORS = {10: (5, 8), 4: (1, 5), 6: (1, 8)}  # Green, Orange, Violet
+
+class ColorTheoryGame:
+    def __init__(self):
+        self.stage = 1
+        self.score = 0
+        self.selected_color = None
+        self.mix_question = None
+        self.final_quiz = []
+        pyxel.init(256, 256, caption="Color Theory Game")
+        pyxel.mouse(True)
+        self.reset_quiz()
+        pyxel.run(self.update, self.draw)
+
+    def reset_quiz(self):
+        self.final_quiz = [
+            {"question": "Is Red a warm or cool color?", "answer": "warm"},
+            {"question": "What color do Red and Blue make?", "answer": "6"},  # Violet
+            {"question": "Is Blue Green a warm or cool color?", "answer": "cool"},
+            {"question": "What color do Yellow and Blue make?", "answer": "10"}  # Green
+        ]
+        random.shuffle(self.final_quiz)
+
+    def update(self):
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+
+        if self.stage == 2:
+            self.check_color_category()
+        elif self.stage == 3:
+            self.check_color_mix()
+        elif self.stage == 4:
+            self.check_final_quiz()
+
+    def draw(self):
+        pyxel.cls(0)
+        if self.stage == 1:
+            self.display_color_categories()
+        elif self.stage == 2:
+            self.display_color_challenge()
+        elif self.stage == 3:
+            self.display_color_mix_explanation()
+        elif self.stage == 4:
+            self.display_final_quiz()
+
+    def display_color_categories(self):
+        pyxel.text(10, 10, "Warm Colors:", 7)
+        y = 30
+        for idx, color in enumerate(WARM_COLORS):
+            pyxel.rect(10, y + idx * 10, 20, 10, color)
+
+        pyxel.text(130, 10, "Cool Colors:", 7)
+        y = 30
+        for idx, color in enumerate(COOL_COLORS):
+            pyxel.rect(130, y + idx * 10, 20, 10, color)
+
+        pyxel.text(10, 200, "Press ENTER to start the challenge", 7)
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.stage += 1
+
+    def display_color_challenge(self):
+        if not self.selected_color:
+            self.selected_color = random.choice(WARM_COLORS + COOL_COLORS)
+        pyxel.text(10, 10, f"Is this color warm or cool?", 7)
+        pyxel.rect(10, 30, 20, 20, self.selected_color)
+        pyxel.text(10, 60, "Click on your answer:", 7)
+        pyxel.text(10, 80, "Warm", pyxel.COLOR_RED)
+        pyxel.text(100, 80, "Cool", pyxel.COLOR_BLUE)
+
+    def check_color_category(self):
+        if pyxel.btnp(pyxel.MOUSE_LEFT_BUTTON):
+            if 10 <= pyxel.mouse_x <= 50 and 80 <= pyxel.mouse_y <= 90:
+                answer = "warm"
+            elif 100 <= pyxel.mouse_x <= 140 and 80 <= pyxel.mouse_y <= 90:
+                answer = "cool"
+            else:
+                return
+            if (self.selected_color in WARM_COLORS and answer == "warm") or (self.selected_color in COOL_COLORS and answer == "cool"):
+                self.score += 1
+            self.selected_color = None
+            if self.score >= 3:
+                self.stage += 1
+
+    def display_color_mix_explanation(self):
+        pyxel.text(10, 10, "Primary Colors:", 7)
+        y = 30
+        for idx, color in enumerate(PRIMARY_COLORS):
+            pyxel.rect(10, y + idx * 10, 20, 10, color)
+
+        pyxel.text(10, 80, "Primary + Primary = Secondary", 7)
+        pyxel.text(10, 100, "Red + Blue = Violet", 7)
+        pyxel.text(10, 120, "Red + Yellow = Orange", 7)
+        pyxel.text(10, 140, "Yellow + Blue = Green", 7)
+
+        pyxel.text(10, 200, "Press ENTER to start the quiz", 7)
+        if pyxel.btnp(pyxel.KEY_RETURN):
+            self.stage += 1
+
+    def display_final_quiz(self):
+        if not self.final_quiz:
+            self.reset_quiz()
+        else:
+            question = self.final_quiz.pop()
+            pyxel.text(10, 10, question["question"], 7)
+            answer = question["answer"]
+            # Display the question and get answer through key input
+            if pyxel.btnp(pyxel.KEY_Y):
+                if answer == "warm" or answer == "cool":
+                    if (self.selected_color in WARM_COLORS and answer == "warm") or (self.selected_color in COOL_COLORS and answer == "cool"):
+                        self.score += 1
+                elif answer.isdigit():
+                    if int(answer) == 6 and pyxel.mouse_x == 1 and pyxel.mouse_y == 8:
+                        self.score += 1
+                    elif int(answer) == 10 and pyxel.mouse_x == 5 and pyxel.mouse_y == 8:
+                        self.score += 1
+                    elif int(answer) == 4 and pyxel.mouse_x == 1 and pyxel.mouse_y == 5:
+                        self.score += 1
+
+        pyxel.text(10, 200, f"Final Score: {self.score}", 7)
+        pyxel.text(10, 220, "Press Q to quit", 7)
+
+
+if __name__ == "__main__":
+    ColorTheoryGame()
